@@ -1,7 +1,10 @@
 @startuml
+!NEW_C4_STYLE=1
 !theme C4_sandstone from <C4/themes>
 !include Templates/C4_Container.puml
-title "Container diagrams: Тёплый дом"
+title Container diagrams: Кинобездна (CinemaAbyss)
+
+
 
 SHOW_PERSON_OUTLINE()
 ' LAYOUT_LANDSCAPE()
@@ -9,49 +12,116 @@ SHOW_PERSON_OUTLINE()
 
 Person(user, "User", "Пользователь")
 
-Enterprise_Boundary(smart_house_system, "Smart Home (domen)") {
+Enterprise_Boundary(smart_house_system, "CinemaAbyss (domen)") {
 
-    Container(web_app, "Web Application", "", "Веб-приложение")  
-    Container(api_gateway, "API Gateway", "Kong", "Маршрутизирует запросы к микросервисам")
-           
-    System_Boundary(sensor_management, "Sensor management (subdomen)") {
-        Container(sensor_management_api_application, "API Application", "Go", "Предоставляет функции через API для управления датчиками")
-        ContainerDb(sensor_management_database_service, "Database", "PostgreSQL", "Хранит информацию")
-        
-        Rel(sensor_management_api_application, sensor_management_database_service, "Читает и записывает")
+    Container(mobile_application, "Mobile App")
+    Container(web_application, "Web App") 
+    Container(smart_tv_application, "Smart TV App")
+
+    Rel(user, mobile_application, "Uses")
+    Rel(user, web_application, "Uses")
+    Rel(user, smart_tv_application, "Uses")
+
+    Container(bff_mobile_application, "BFF Mobile App", "Отвечает за сбор информации от разных микросервисов")
+    Container(bff_web_application, "BFF Web App", "Отвечает за сбор информации от разных микросервисов") 
+    Container(bff_smart_tv_application, "BFF Smart TV App", "Отвечает за сбор информации от разных микросервисов")
+
+    Rel(mobile_application, bff_mobile_application, "Uses")
+    Rel(web_application, bff_web_application, "Uses")
+    Rel(smart_tv_application, bff_smart_tv_application, "Uses")
+
+    System_Boundary(proxy_service, "Proxy Service (subdomen)", , , "Реализует функционал для постепенного перехода от монолита к микросервисам") {
+        Container(gateway_api, "API Gateway", "Kong", "Маршрутизирует запросы к микросервисам")
     }
+    Rel(bff_mobile_application, gateway_api, "Uses")
+    Rel(bff_web_application, gateway_api, "Uses")
+    Rel(bff_smart_tv_application, gateway_api, "Uses")
 
-    System_Boundary(telemetry_management, "Telemetry management (subdomen)") {
-        Container(telemetry_management_api_application, "API Application", "Go", "Предоставляет функции через API")
-        Container(telemetry_management_sensor_api_monitor, "API Application", "Go", "API монитор датчиков")
+    Container(monolith_api, "API Monolith", , "API монолита для постепенного перехода")   
+    Rel_R(gateway_api, monolith_api, "Uses")
+
+    System_Boundary(movies_service, "Movies Service (subdomen)", , , "Обрабатывает всю функциональность, связанную с фильмами") {
+        Container(movies_service_api, "API Application", "Go", "Предоставляет функции через API")
+        ContainerDb(movies_service_database, "Database", "PostgreSQL", "Хранит информацию")
         
-        ContainerDb(telemetry_management_database_service, "Database", "NoSql", "Хранит информацию")
-        ContainerQueue(queue, "Queue", "Очередь для высоконагруженных систем и потоковой обработки событий", "Apache Kafka")
-
-        Rel(telemetry_management_api_application, telemetry_management_database_service, "Читает и записывает")
-        Rel(telemetry_management_sensor_api_monitor, queue, "Публикует события от устройств")
-        Rel(telemetry_management_api_application, queue, "Подписано на канал данных с информацией от устройств")
+        Rel(movies_service_api, movies_service_database, "Reads/Writes")
     }
+    Rel(gateway_api, movies_service_api, "Uses")
+
+    System_Boundary(events_service, "Events Service (subdomen)", , , "Обрабатывает коммуникацию между сервисами на основе событий с использованием Kafka") {
+        Container(events_service_api, "API Application", "Go", "Предоставляет функции через API")
+        ' ContainerDb(events_service_database, "Database", "PostgreSQL", "Хранит информацию")
+        ContainerQueue(events_service_queue, "Queue", "Очередь для обработки событий", "Apache Kafka")
+
+        Rel(events_service_api, events_service_database, "Reads/Writes")
+    }
+    Rel(gateway_api, events_service_api, "Uses")
+
+    System_Boundary(users_service, "Users Service (subdomen)") {
+        Container(users_service_api, "API Application", "Go", "Предоставляет функции через API")
+        ContainerDb(users_service_database, "Database", "PostgreSQL", "Хранит информацию")
+
+        Rel(users_service_api, users_service_database, "Reads/Writes")
+    }
+    Rel(gateway_api, users_service_api, "Uses")
+
+    System_Boundary(payments_service, "Payments Service (subdomen)") {
+        Container(payments_service_api, "API Application", "Go", "Предоставляет функции через API")
+        ContainerDb(payments_service_database, "Database", "PostgreSQL", "Хранит информацию")
+
+        Rel(payments_service_api, payments_service_database, "Reads/Writes")
+    }
+    Rel(gateway_api, payments_service_api, "Uses")
+
+    Container_Ext(payment_acquiring_system_ext, "Payment Acquiring System", "Эквайринговая система")
+    Rel(payments_service_api, payment_acquiring_system_ext, "Uses")
+
+    ' System_Boundary(telemetry_management, "Telemetry management (subdomen)") {
+    '     Container(telemetry_management_api_application, "API Application", "Go", "Предоставляет функции через API")
+    '     Container(telemetry_management_sensor_api_monitor, "API Application", "Go", "API монитор датчиков")
+        
+    '     ContainerDb(telemetry_management_database_service, "Database", "NoSql", "Хранит информацию")
+    '     ContainerQueue(queue, "Queue", "Очередь для высоконагруженных систем и потоковой обработки событий", "Apache Kafka")
+
+    '     Rel(telemetry_management_api_application, telemetry_management_database_service, "Читает и записывает")
+    '     Rel(telemetry_management_sensor_api_monitor, queue, "Публикует события от устройств")
+    '     Rel(telemetry_management_api_application, queue, "Подписано на канал данных с информацией от устройств")
+    ' }
    
-    System_Boundary(user_management, "User management (subdomen)") {
-        Container(user_management_api_application, "API Application", "Go", "Предоставляет функции через API")
-        ContainerDb(user_management_database_service, "Database", "PostgreSQL", "Хранит информацию")
+    ' System_Boundary(user_management, "User management (subdomen)") {
+    '     Container(user_management_api_application, "API Application", "Go", "Предоставляет функции через API")
+    '     ContainerDb(user_management_database_service, "Database", "PostgreSQL", "Хранит информацию")
 
-        Rel(user_management_api_application, user_management_database_service, "Читает и записывает")
-    }
+    '     Rel(user_management_api_application, user_management_database_service, "Читает и записывает")
+    ' }
 
-    System_Boundary(house_management, "Home management (subdomen)") {
-        Container(house_management_api_application, "API Application", "Go", "Предоставляет функции через API")
-        ContainerDb(house_management_database_service, "Database", "PostgreSQL", "Хранит информацию")
+    ' System_Boundary(house_management, "Home management (subdomen)") {
+    '     Container(house_management_api_application, "API Application", "Go", "Предоставляет функции через API")
+    '     ContainerDb(house_management_database_service, "Database", "PostgreSQL", "Хранит информацию")
 
-        Rel(house_management_api_application, house_management_database_service, "Читает и записывает")
-    }
+    '     Rel(house_management_api_application, house_management_database_service, "Читает и записывает")
+    ' }
 
-    Rel(user, web_app, "Использует")
-    Rel(web_app, api_gateway, "Использует")
-    Rel(api_gateway, sensor_management_api_application, "Использует")
-    Rel(api_gateway, telemetry_management_api_application, "Использует")
-    Rel(api_gateway, user_management_api_application, "Использует")
-    Rel(api_gateway, house_management_api_application, "Использует")
+    ' Rel(user, web_app, "Использует")
+    ' Rel(web_app, gateway_api, "Использует")
+
+    ' Rel(gateway_api, telemetry_management_api_application, "Использует")
+    ' Rel(gateway_api, user_management_api_application, "Использует")
+    ' Rel(gateway_api, house_management_api_application, "Использует")
 }
+
+
+Boundary(recommendation_system_ext, "Внешняя рекомендательная система") {
+    ContainerQueue_Ext(recommendation_system_queue_ext, "Queue", "Брокер сообщений", "RabbitMQ")
+}
+Rel(gateway_api, recommendation_system_queue_ext, "Uses")
+
+Container_Ext(simple_storage_service_ext, "Simple Storage Service (S3)", "облачный сервис хранения фильмов")
+Rel(gateway_api, simple_storage_service_ext, "Uses")
+
+Container_Ext(online_cinemas_api_ext, "API Online Cinemas", "API Онлайн кинотеатров")
+Rel(gateway_api, online_cinemas_api_ext, "Uses")
+
+
+footer drawn with PlantUML v. %version() and C4-PlantUML v. C4Version()
 @enduml
