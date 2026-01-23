@@ -187,10 +187,7 @@ app.MapPost("/api/events/payment", async (
 .WithName("createPaymentEvent")
 .WithTags("events");
 
-// Health check
-app.MapGet("/api/events/health", () => Results.Ok(new StatusResultDto(true)))
-    .WithName("getEventsServiceHealth")
-    .WithTags("health1");
+app.MapGet("/health", () => "OK");
 
 app.Run();
 
@@ -225,8 +222,6 @@ record EventResponseDto(
     int Partition,
     long Offset,
     object Event);
-
-public record StatusResultDto(bool Success);
 
 //[JsonSerializable(typeof(MovieEventDto))]
 //[JsonSerializable(typeof(UserEventDto))]

@@ -22,7 +22,6 @@ var app = builder.Build();
     );
 //}
 
-var port = Environment.GetEnvironmentVariable("PORT") ?? "9000";
 var monolithUrl = Environment.GetEnvironmentVariable("MONOLITH_URL") ?? "http://localhost:9080";
 var moviesServiceUrl = Environment.GetEnvironmentVariable("MOVIES_SERVICE_URL") ?? "http://localhost:9081";
 

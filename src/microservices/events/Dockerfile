@@ -29,7 +29,8 @@ RUN dotnet build "./events-service.csproj" -c $BUILD_CONFIGURATION -o /app/build
 # This stage is used to publish the service project to be copied to the final stage
 FROM build AS publish
 ARG BUILD_CONFIGURATION=Release
-RUN dotnet publish "./events-service.csproj" -c $BUILD_CONFIGURATION -o /app/publish /p:UseAppHost=true
+#RUN dotnet publish "./events-service.csproj" -c $BUILD_CONFIGURATION -o /app/publish /p:UseAppHost=true
+RUN dotnet publish "./events-service.csproj" -c Debug -o /app/publish /p:UseAppHost=true
 
 # This stage is used as the base for the final stage when launching from VS to support debugging in regular mode (Default when not using the Debug configuration)
 FROM base AS aotdebug
