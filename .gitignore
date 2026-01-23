@@ -154,4 +154,4 @@ go.work
 
 # Postman tests reports
 tests/postman/reports/
-/src/microservices/proxy/proxy-service/.editorconfig
+*.editorconfig
