@@ -186,7 +186,7 @@ app.MapPost("/api/events/payment", async (
 .WithName("createPaymentEvent")
 .WithTags("events");
 
-app.MapGet("/api/events/health", () => "OK");
+app.MapGet("/api/events/health", () => Results.Ok(new { Status = true }));
 
 app.Run();
 

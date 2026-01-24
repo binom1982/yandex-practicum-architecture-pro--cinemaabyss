@@ -1,4 +1,5 @@
-﻿using System.Net;
+﻿using System;
+using System.Net;
 using System.Security.Cryptography;
 using System.Text.Json.Serialization;
 
@@ -53,10 +54,21 @@ app.MapGet("/api/movies", async (HttpContext context) =>
         ? $"{moviesServiceUrl}/api/movies"
         : $"{monolithUrl}/api/movies";
 
+    await RedirectRequest(context, targetUrl);
+});
+
+app.MapGet("/api/users", async (HttpContext context) =>
+{
+    var targetUrl = $"{monolithUrl}/api/users";
+    await RedirectRequest(context, targetUrl);
+});
+
+async Task RedirectRequest(HttpContext context ,string targetUrl)
+{
     try
     {
         var requestMessage = new HttpRequestMessage(new HttpMethod(context.Request.Method), targetUrl);
-        
+
         var queryString = context.Request.QueryString;
 
         requestMessage.RequestUri = !queryString.HasValue
@@ -98,7 +110,7 @@ app.MapGet("/api/movies", async (HttpContext context) =>
         context.Response.StatusCode = (int)HttpStatusCode.BadGateway;
         await context.Response.WriteAsync("Gateway error");
     }
-});
+}
 
 // Optional: Add a health endpoint
 app.MapGet("/health", () => "OK");
