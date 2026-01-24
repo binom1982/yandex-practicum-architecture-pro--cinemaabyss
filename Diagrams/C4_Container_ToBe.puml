@@ -22,20 +22,28 @@ Enterprise_Boundary(smart_house_system, "CinemaAbyss (domen)") {
     Rel(user, web_application, "Uses")
     Rel(user, smart_tv_application, "Uses")
 
+    Container(gateway_api, "API Gateway", "Kong", "Реализует функционал для постепенного перехода от монолита к микросервисам")
+    
+    Rel(mobile_application, gateway_api, "Uses")
+    Rel(web_application, gateway_api, "Uses")
+    Rel(smart_tv_application, gateway_api, "Uses")
+
+
+
     Container(bff_mobile_application, "BFF Mobile App", "Отвечает за сбор информации от разных микросервисов")
     Container(bff_web_application, "BFF Web App", "Отвечает за сбор информации от разных микросервисов") 
     Container(bff_smart_tv_application, "BFF Smart TV App", "Отвечает за сбор информации от разных микросервисов")
 
-    Rel(mobile_application, bff_mobile_application, "Uses")
-    Rel(web_application, bff_web_application, "Uses")
-    Rel(smart_tv_application, bff_smart_tv_application, "Uses")
+    Rel(gateway_api, bff_mobile_application, "Uses")
+    Rel(gateway_api, bff_web_application, "Uses")
+    Rel(gateway_api, bff_smart_tv_application, "Uses")
 
-    System_Boundary(proxy_service, "Proxy Service (subdomen)", , , "Реализует функционал для постепенного перехода от монолита к микросервисам") {
-        Container(gateway_api, "API Gateway", "Kong", "Маршрутизирует запросы к микросервисам")
-    }
-    Rel(bff_mobile_application, gateway_api, "Uses")
-    Rel(bff_web_application, gateway_api, "Uses")
-    Rel(bff_smart_tv_application, gateway_api, "Uses")
+    ' Rel(mobile_application, bff_mobile_application, "Uses")
+    ' Rel(web_application, bff_web_application, "Uses")
+    ' Rel(smart_tv_application, bff_smart_tv_application, "Uses")
+
+
+
 
     Container(monolith_api, "API Monolith", , "API монолита для постепенного перехода")   
     Rel_R(gateway_api, monolith_api, "Uses")
@@ -46,7 +54,7 @@ Enterprise_Boundary(smart_house_system, "CinemaAbyss (domen)") {
         
         Rel(movies_service_api, movies_service_database, "Reads/Writes")
     }
-    Rel(gateway_api, movies_service_api, "Uses")
+    ' Rel(gateway_api, movies_service_api, "Uses")
 
     System_Boundary(events_service, "Events Service (subdomen)", , , "Обрабатывает коммуникацию между сервисами на основе событий с использованием Kafka") {
         Container(events_service_api, "API Application", "Go", "Предоставляет функции через API")
@@ -55,26 +63,30 @@ Enterprise_Boundary(smart_house_system, "CinemaAbyss (domen)") {
 
         Rel(events_service_api, events_service_database, "Reads/Writes")
     }
-    Rel(gateway_api, events_service_api, "Uses")
+    ' Rel(gateway_api, events_service_api, "Uses")
 
-    System_Boundary(users_service, "Users Service (subdomen)") {
-        Container(users_service_api, "API Application", "Go", "Предоставляет функции через API")
-        ContainerDb(users_service_database, "Database", "PostgreSQL", "Хранит информацию")
 
-        Rel(users_service_api, users_service_database, "Reads/Writes")
-    }
-    Rel(gateway_api, users_service_api, "Uses")
+    Rel(bff_mobile_application, movies_service_api, "Uses")
+    Rel(bff_web_application, movies_service_api, "Uses")
+    Rel(bff_smart_tv_application, movies_service_api, "Uses")
 
-    System_Boundary(payments_service, "Payments Service (subdomen)") {
-        Container(payments_service_api, "API Application", "Go", "Предоставляет функции через API")
-        ContainerDb(payments_service_database, "Database", "PostgreSQL", "Хранит информацию")
+    ' System_Boundary(users_service, "Users Service (subdomen)") {
+    '     Container(users_service_api, "API Application", "Go", "Предоставляет функции через API")
+    '     ContainerDb(users_service_database, "Database", "PostgreSQL", "Хранит информацию")
 
-        Rel(payments_service_api, payments_service_database, "Reads/Writes")
-    }
-    Rel(gateway_api, payments_service_api, "Uses")
+    '     Rel(users_service_api, users_service_database, "Reads/Writes")
+    ' }
+    ' Rel(gateway_api, users_service_api, "Uses")
 
-    Container_Ext(payment_acquiring_system_ext, "Payment Acquiring System", "Эквайринговая система")
-    Rel(payments_service_api, payment_acquiring_system_ext, "Uses")
+    ' System_Boundary(payments_service, "Payments Service (subdomen)") {
+    '     Container(payments_service_api, "API Application", "Go", "Предоставляет функции через API")
+    '     ContainerDb(payments_service_database, "Database", "PostgreSQL", "Хранит информацию")
+
+    '     Rel(payments_service_api, payments_service_database, "Reads/Writes")
+    ' }
+    ' Rel(gateway_api, payments_service_api, "Uses")
+
+
 
     ' System_Boundary(telemetry_management, "Telemetry management (subdomen)") {
     '     Container(telemetry_management_api_application, "API Application", "Go", "Предоставляет функции через API")
@@ -110,18 +122,19 @@ Enterprise_Boundary(smart_house_system, "CinemaAbyss (domen)") {
     ' Rel(gateway_api, house_management_api_application, "Использует")
 }
 
+Container_Ext(payment_acquiring_system_ext, "Payment Acquiring System", "Эквайринговая система")
+Rel(monolith_api, payment_acquiring_system_ext, "Uses")
 
 Boundary(recommendation_system_ext, "Внешняя рекомендательная система") {
     ContainerQueue_Ext(recommendation_system_queue_ext, "Queue", "Брокер сообщений", "RabbitMQ")
 }
-Rel(gateway_api, recommendation_system_queue_ext, "Uses")
+Rel(monolith_api, recommendation_system_queue_ext, "Uses")
 
 Container_Ext(simple_storage_service_ext, "Simple Storage Service (S3)", "облачный сервис хранения фильмов")
-Rel(gateway_api, simple_storage_service_ext, "Uses")
+Rel(monolith_api, simple_storage_service_ext, "Uses")
 
 Container_Ext(online_cinemas_api_ext, "API Online Cinemas", "API Онлайн кинотеатров")
-Rel(gateway_api, online_cinemas_api_ext, "Uses")
-
+Rel(monolith_api, online_cinemas_api_ext, "Uses")
 
 footer drawn with PlantUML v. %version() and C4-PlantUML v. C4Version()
 @enduml
