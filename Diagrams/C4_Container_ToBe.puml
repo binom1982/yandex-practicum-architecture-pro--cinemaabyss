@@ -44,8 +44,25 @@ Enterprise_Boundary(smart_house_system, "CinemaAbyss (domen)") {
 
 
 
+    System_Boundary(monolith_service, "Monolith Service", , , "Монолит") {
+        ' Container(monolith_api, "API Monolith", , "API монолита для постепенного перехода")  
 
-    Container(monolith_api, "API Monolith", , "API монолита для постепенного перехода")   
+        System_Boundary(users_service, "Users Service (subdomen)") {
+            Container(users_service_api, "API Application", "Go", "Предоставляет функции через API")
+            ContainerDb(users_service_database, "Database", "PostgreSQL", "Хранит информацию")
+
+            Rel(users_service_api, users_service_database, "Reads/Writes")
+        }
+        Rel(gateway_api, users_service_api, "Uses")
+
+    ' System_Boundary(payments_service, "Payments Service (subdomen)") {
+    '     Container(payments_service_api, "API Application", "Go", "Предоставляет функции через API")
+    '     ContainerDb(payments_service_database, "Database", "PostgreSQL", "Хранит информацию")
+
+    '     Rel(payments_service_api, payments_service_database, "Reads/Writes")
+    ' }
+    ' Rel(gateway_api, payments_service_api, "Uses") 
+    }
     Rel_R(gateway_api, monolith_api, "Uses")
 
     System_Boundary(movies_service, "Movies Service (subdomen)", , , "Обрабатывает всю функциональность, связанную с фильмами") {
@@ -70,21 +87,7 @@ Enterprise_Boundary(smart_house_system, "CinemaAbyss (domen)") {
     Rel(bff_web_application, movies_service_api, "Uses")
     Rel(bff_smart_tv_application, movies_service_api, "Uses")
 
-    ' System_Boundary(users_service, "Users Service (subdomen)") {
-    '     Container(users_service_api, "API Application", "Go", "Предоставляет функции через API")
-    '     ContainerDb(users_service_database, "Database", "PostgreSQL", "Хранит информацию")
-
-    '     Rel(users_service_api, users_service_database, "Reads/Writes")
-    ' }
-    ' Rel(gateway_api, users_service_api, "Uses")
-
-    ' System_Boundary(payments_service, "Payments Service (subdomen)") {
-    '     Container(payments_service_api, "API Application", "Go", "Предоставляет функции через API")
-    '     ContainerDb(payments_service_database, "Database", "PostgreSQL", "Хранит информацию")
-
-    '     Rel(payments_service_api, payments_service_database, "Reads/Writes")
-    ' }
-    ' Rel(gateway_api, payments_service_api, "Uses")
+    
 
 
 
