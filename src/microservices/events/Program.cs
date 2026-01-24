@@ -1,5 +1,4 @@
 ﻿using System.Text.Json;
-using System.Text.Json.Serialization;
 
 using Confluent.Kafka;
 
@@ -106,7 +105,7 @@ app.MapPost("/api/events/user", async (
 
     if (string.IsNullOrEmpty(userEvent.Timestamp))
     {
-        //userEvent.Timestamp = timestamp;
+        userEvent = userEvent with { Timestamp = timestamp };
     }
 
     var payload = new
@@ -151,7 +150,7 @@ app.MapPost("/api/events/payment", async (
     
     if (string.IsNullOrEmpty(paymentEvent.Timestamp))
     {
-        //paymentEvent.Timestamp = timestamp;
+        paymentEvent = paymentEvent with { Timestamp = timestamp };
     }
 
     var payload = new
@@ -187,7 +186,7 @@ app.MapPost("/api/events/payment", async (
 .WithName("createPaymentEvent")
 .WithTags("events");
 
-app.MapGet("/health", () => "OK");
+app.MapGet("/api/events/health", () => "OK");
 
 app.Run();
 

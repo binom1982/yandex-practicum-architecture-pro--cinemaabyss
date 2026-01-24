@@ -30,7 +30,7 @@ RUN dotnet build "./events-service.csproj" -c $BUILD_CONFIGURATION -o /app/build
 FROM build AS publish
 ARG BUILD_CONFIGURATION=Release
 #RUN dotnet publish "./events-service.csproj" -c $BUILD_CONFIGURATION -o /app/publish /p:UseAppHost=true
-RUN dotnet publish "./events-service.csproj" -c Debug -o /app/publish /p:UseAppHost=true
+RUN dotnet publish "./events-service.csproj" -c Debug -o /app/publish
 
 # This stage is used as the base for the final stage when launching from VS to support debugging in regular mode (Default when not using the Debug configuration)
 FROM base AS aotdebug
@@ -42,8 +42,9 @@ RUN apt-get update \
 USER app
 
 # This stage is used in production or when running from VS in regular mode (Default when not using the Debug configuration)
-FROM ${FINAL_BASE_IMAGE:-mcr.microsoft.com/dotnet/runtime-deps:10.0} AS final
+#FROM ${FINAL_BASE_IMAGE:-mcr.microsoft.com/dotnet/runtime-deps:10.0} AS final
+FROM ${FINAL_BASE_IMAGE:-mcr.microsoft.com/dotnet/aspnet:10.0} AS final
 WORKDIR /app
 EXPOSE 8080
 COPY --from=publish /app/publish .
-ENTRYPOINT ["./events-service"]
+ENTRYPOINT ["dotnet", "events-service.dll"]
