@@ -188,7 +188,7 @@ app.MapPost("/api/events/payment", async (
 
 app.MapGet("/api/events/health", () => Results.Ok(new { Status = true }));
 
-app.Run();
+app.Run("http://+:8082");
 
 // --- DTOs ---
 

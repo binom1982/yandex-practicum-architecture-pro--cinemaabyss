@@ -28,116 +28,73 @@ Enterprise_Boundary(smart_house_system, "CinemaAbyss (domen)") {
     Rel(web_application, gateway_api, "Uses")
     Rel(smart_tv_application, gateway_api, "Uses")
 
+    System_Boundary(monolith, "Monolith", , , "Монолит") {
+        Container(monolith_movies_api, "API Movies (subdomen)", "Go", "Предоставляет функции через API")
+        Container(monolith_users_api, "API Users (subdomen)", "Go", "Предоставляет функции через API")
+        Container(monolith_payments_api, "API Payments (subdomen)", "Go", "Предоставляет функции через API")
+        Container(monolith_subscriptions_api, "API Subscriptions (subdomen)", "Go", "Предоставляет функции через API")
 
+        ContainerDb(monolith_database, "Database", "PostgreSQL", "Хранит информацию")
 
-    Container(bff_mobile_application, "BFF Mobile App", "Отвечает за сбор информации от разных микросервисов")
-    Container(bff_web_application, "BFF Web App", "Отвечает за сбор информации от разных микросервисов") 
-    Container(bff_smart_tv_application, "BFF Smart TV App", "Отвечает за сбор информации от разных микросервисов")
+        Rel(gateway_api, monolith_movies_api, "Uses") 
+        Rel(gateway_api, monolith_users_api, "Uses")
+        Rel(gateway_api, monolith_payments_api, "Uses") 
+        Rel(gateway_api, monolith_subscriptions_api, "Uses") 
 
-    Rel(gateway_api, bff_mobile_application, "Uses")
-    Rel(gateway_api, bff_web_application, "Uses")
-    Rel(gateway_api, bff_smart_tv_application, "Uses")
+        Rel(monolith_movies_api, monolith_database, "Reads/Writes")
+        Rel(monolith_users_api, monolith_database, "Reads/Writes")
+        Rel(monolith_payments_api, monolith_database, "Reads/Writes")
+        Rel(monolith_subscriptions_api, monolith_database, "Reads/Writes")    
+    }
 
-    ' Rel(mobile_application, bff_mobile_application, "Uses")
-    ' Rel(web_application, bff_web_application, "Uses")
-    ' Rel(smart_tv_application, bff_smart_tv_application, "Uses")
+    System_Boundary(microservices, "Microservices", , , "Микросервисы") {
+        Container(microservices_bff_mobile_application, "BFF Mobile App", "Отвечает за сбор информации от разных микросервисов")
+        Container(microservices_bff_web_application, "BFF Web App", "Отвечает за сбор информации от разных микросервисов") 
+        Container(microservices_bff_smart_tv_application, "BFF Smart TV App", "Отвечает за сбор информации от разных микросервисов")
 
-
-
-    System_Boundary(monolith_service, "Monolith Service", , , "Монолит") {
-        ' Container(monolith_api, "API Monolith", , "API монолита для постепенного перехода")  
-
-        System_Boundary(users_service, "Users Service (subdomen)") {
-            Container(users_service_api, "API Application", "Go", "Предоставляет функции через API")
-            ContainerDb(users_service_database, "Database", "PostgreSQL", "Хранит информацию")
-
-            Rel(users_service_api, users_service_database, "Reads/Writes")
+        System_Boundary(movies_service, "Movies Service (subdomen)", , , "Обрабатывает всю функциональность, связанную с фильмами") {
+            Container(movies_service_api, "API Application", "Go", "Предоставляет функции через API")
+            ContainerDb(movies_service_database, "Database", "PostgreSQL", "Хранит информацию")
+            
+            Rel(movies_service_api, movies_service_database, "Reads/Writes")
         }
-        Rel(gateway_api, users_service_api, "Uses")
 
-    ' System_Boundary(payments_service, "Payments Service (subdomen)") {
-    '     Container(payments_service_api, "API Application", "Go", "Предоставляет функции через API")
-    '     ContainerDb(payments_service_database, "Database", "PostgreSQL", "Хранит информацию")
+        System_Boundary(events_service, "Events Service (subdomen)", , , "Обрабатывает коммуникацию между сервисами на основе событий с использованием Kafka") {
+            Container(events_service_api, "API Events", "Go", "Предоставляет функции через API")
+            ContainerQueue(events_service_queue, "Queue", "Очередь для обработки событий", "Apache Kafka")
+        }
 
-    '     Rel(payments_service_api, payments_service_database, "Reads/Writes")
-    ' }
-    ' Rel(gateway_api, payments_service_api, "Uses") 
-    }
-    Rel_R(gateway_api, monolith_api, "Uses")
+        Rel(gateway_api, microservices_bff_mobile_application, "Uses")
+        Rel(gateway_api, microservices_bff_web_application, "Uses")
+        Rel(gateway_api, microservices_bff_smart_tv_application, "Uses")
 
-    System_Boundary(movies_service, "Movies Service (subdomen)", , , "Обрабатывает всю функциональность, связанную с фильмами") {
-        Container(movies_service_api, "API Application", "Go", "Предоставляет функции через API")
-        ContainerDb(movies_service_database, "Database", "PostgreSQL", "Хранит информацию")
+        Rel(microservices_bff_mobile_application, movies_service_api, "Uses")
+        Rel(microservices_bff_web_application, movies_service_api, "Uses")
+        Rel(microservices_bff_smart_tv_application, movies_service_api, "Uses")
+
+        BiRel(events_service_api, events_service_queue, "Publishes to/Subscribes to")
+        BiRel(movies_service_api, events_service_api, "Publishes to/Subscribes to")
         
-        Rel(movies_service_api, movies_service_database, "Reads/Writes")
+        BiRel(monolith_movies_api, events_service_api, "Publishes to/Subscribes to")
+        BiRel(monolith_users_api, events_service_api, "Publishes to/Subscribes to")
+        BiRel(monolith_payments_api, events_service_api, "Publishes to/Subscribes to")
     }
-    ' Rel(gateway_api, movies_service_api, "Uses")
-
-    System_Boundary(events_service, "Events Service (subdomen)", , , "Обрабатывает коммуникацию между сервисами на основе событий с использованием Kafka") {
-        Container(events_service_api, "API Application", "Go", "Предоставляет функции через API")
-        ' ContainerDb(events_service_database, "Database", "PostgreSQL", "Хранит информацию")
-        ContainerQueue(events_service_queue, "Queue", "Очередь для обработки событий", "Apache Kafka")
-
-        Rel(events_service_api, events_service_database, "Reads/Writes")
-    }
-    ' Rel(gateway_api, events_service_api, "Uses")
-
-
-    Rel(bff_mobile_application, movies_service_api, "Uses")
-    Rel(bff_web_application, movies_service_api, "Uses")
-    Rel(bff_smart_tv_application, movies_service_api, "Uses")
-
-    
-
-
-
-    ' System_Boundary(telemetry_management, "Telemetry management (subdomen)") {
-    '     Container(telemetry_management_api_application, "API Application", "Go", "Предоставляет функции через API")
-    '     Container(telemetry_management_sensor_api_monitor, "API Application", "Go", "API монитор датчиков")
-        
-    '     ContainerDb(telemetry_management_database_service, "Database", "NoSql", "Хранит информацию")
-    '     ContainerQueue(queue, "Queue", "Очередь для высоконагруженных систем и потоковой обработки событий", "Apache Kafka")
-
-    '     Rel(telemetry_management_api_application, telemetry_management_database_service, "Читает и записывает")
-    '     Rel(telemetry_management_sensor_api_monitor, queue, "Публикует события от устройств")
-    '     Rel(telemetry_management_api_application, queue, "Подписано на канал данных с информацией от устройств")
-    ' }
-   
-    ' System_Boundary(user_management, "User management (subdomen)") {
-    '     Container(user_management_api_application, "API Application", "Go", "Предоставляет функции через API")
-    '     ContainerDb(user_management_database_service, "Database", "PostgreSQL", "Хранит информацию")
-
-    '     Rel(user_management_api_application, user_management_database_service, "Читает и записывает")
-    ' }
-
-    ' System_Boundary(house_management, "Home management (subdomen)") {
-    '     Container(house_management_api_application, "API Application", "Go", "Предоставляет функции через API")
-    '     ContainerDb(house_management_database_service, "Database", "PostgreSQL", "Хранит информацию")
-
-    '     Rel(house_management_api_application, house_management_database_service, "Читает и записывает")
-    ' }
-
-    ' Rel(user, web_app, "Использует")
-    ' Rel(web_app, gateway_api, "Использует")
-
-    ' Rel(gateway_api, telemetry_management_api_application, "Использует")
-    ' Rel(gateway_api, user_management_api_application, "Использует")
-    ' Rel(gateway_api, house_management_api_application, "Использует")
 }
 
+Container_Ext(online_cinemas_api_ext, "API Online Cinemas", "API Онлайн кинотеатров")
+Rel_L(monolith_subscriptions_api, online_cinemas_api_ext, "Uses")
+
 Container_Ext(payment_acquiring_system_ext, "Payment Acquiring System", "Эквайринговая система")
-Rel(monolith_api, payment_acquiring_system_ext, "Uses")
+Rel_L(monolith_payments_api, payment_acquiring_system_ext, "Uses")
 
 Boundary(recommendation_system_ext, "Внешняя рекомендательная система") {
     ContainerQueue_Ext(recommendation_system_queue_ext, "Queue", "Брокер сообщений", "RabbitMQ")
 }
-Rel(monolith_api, recommendation_system_queue_ext, "Uses")
+Rel(gateway_api, recommendation_system_queue_ext, "Uses")
 
 Container_Ext(simple_storage_service_ext, "Simple Storage Service (S3)", "облачный сервис хранения фильмов")
-Rel(monolith_api, simple_storage_service_ext, "Uses")
-
-Container_Ext(online_cinemas_api_ext, "API Online Cinemas", "API Онлайн кинотеатров")
-Rel(monolith_api, online_cinemas_api_ext, "Uses")
+Rel(monolith_movies_api, simple_storage_service_ext, "Uses")
+Rel(movies_service_api, simple_storage_service_ext, "Uses")
 
 footer drawn with PlantUML v. %version() and C4-PlantUML v. C4Version()
 @enduml

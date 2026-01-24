@@ -115,7 +115,7 @@ async Task RedirectRequest(HttpContext context ,string targetUrl)
 // Optional: Add a health endpoint
 app.MapGet("/health", () => "OK");
 
-app.Run();
+app.Run("http://+:8000");
 
 
 /*
