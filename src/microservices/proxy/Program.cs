@@ -53,12 +53,14 @@ var httpClient = app.Services.GetRequiredService<IHttpClientFactory>().CreateCli
 
 app.Use(async (context, next) =>
 {
+    
     var path = context.Request.Path;
-
+    Console.WriteLine($"{nameof(path)}: {path}");
     if (path.StartsWithSegments("/api/users"))
     {
         var newPath = path.ToString().TrimStart('/');
         var targetUrl = $"{monolithUrl}/{newPath}{context.Request.QueryString}";
+        Console.WriteLine($"{nameof(targetUrl)}: {targetUrl}");
         await RedirectRequest(context, targetUrl);
         return; // не вызываем next()
     }
@@ -67,6 +69,7 @@ app.Use(async (context, next) =>
     {
         var newPath = path.ToString().TrimStart('/');
         var targetUrl = $"{eventsServiceUrl}/{newPath}{context.Request.QueryString}";
+        Console.WriteLine($"{nameof(targetUrl)}: {targetUrl}");
         await RedirectRequest(context, targetUrl);
         return;
     }
