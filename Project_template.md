@@ -64,7 +64,7 @@
 
 ![На изображении изображено Kafka topics](screenshots\kafka_topics.png "Kafka topics")
 
-- ![На изображении изображено Tests result](screenshots\tests_result.png "Tests result")
+![На изображении изображено Tests result](screenshots\tests_result.png "Tests result")
 
 ## Задание 3
 
@@ -305,6 +305,8 @@ cat .docker/config.json | base64
 
   Часть тестов с health-чек упадет, но создание событий отработает.
   Откройте логи event-service и сделайте скриншот обработки событий
+
+  ![На изображении изображено Kubernetes event processing](screenshots\k8s_events-service_event_processing.png "Kubernetes event processing")
 
 #### Шаг 3
 
