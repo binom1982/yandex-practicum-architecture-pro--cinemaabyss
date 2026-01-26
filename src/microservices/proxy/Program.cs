@@ -38,6 +38,10 @@ var monolithUrl = Environment.GetEnvironmentVariable("MONOLITH_URL") ?? "http://
 var moviesServiceUrl = Environment.GetEnvironmentVariable("MOVIES_SERVICE_URL") ?? "http://localhost:9081";
 var eventsServiceUrl = Environment.GetEnvironmentVariable("EVENTS_SERVICE_URL") ?? "http://localhost:8082";
 
+Console.WriteLine($"MONOLITH_URL: {monolithUrl}");
+Console.WriteLine($"MOVIES_SERVICE_URL: {moviesServiceUrl}");
+Console.WriteLine($"EVENTS_SERVICE_URL: {eventsServiceUrl}");
+
 // Постепенная миграция
 var isGradualMigration = Environment.GetEnvironmentVariable("GRADUAL_MIGRATION")?.Equals("true", StringComparison.OrdinalIgnoreCase) == true;
 
