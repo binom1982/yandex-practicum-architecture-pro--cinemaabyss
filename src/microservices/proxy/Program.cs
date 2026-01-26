@@ -69,14 +69,14 @@ app.Use(async (context, next) =>
         return; // не вызываем next()
     }
 
-    if (path.StartsWithSegments("/api/events"))
-    {
-        var newPath = path.ToString().TrimStart('/');
-        var targetUrl = $"{eventsServiceUrl}/{newPath}{context.Request.QueryString}";
-        Console.WriteLine($"{nameof(targetUrl)}: {targetUrl}");
-        await RedirectRequest(context, targetUrl);
-        return;
-    }
+    //if (path.StartsWithSegments("/api/events"))
+    //{
+    //    var newPath = path.ToString().TrimStart('/');
+    //    var targetUrl = $"{eventsServiceUrl}/{newPath}{context.Request.QueryString}";
+    //    Console.WriteLine($"{nameof(targetUrl)}: {targetUrl}");
+    //    await RedirectRequest(context, targetUrl);
+    //    return;
+    //}
 
     await next(); // если не нашли — продолжаем конвейер
 });
