@@ -111,24 +111,25 @@ app.MapGet("/api/movies", async (HttpContext context) =>
 //    await RedirectRequest(context, targetUrl);
 //}).ExcludeFromDescription();
 
-
-
-async Task RedirectRequest(HttpContext context ,string targetUrl)
+async Task RedirectRequest(HttpContext context, string targetUrl)
 {
     try
     {
-        var requestMessage = new HttpRequestMessage(new HttpMethod(context.Request.Method), targetUrl);
+        var method = context.Request.Method;
+        var requestMessage = new HttpRequestMessage(new HttpMethod(method), targetUrl);
 
-        var queryString = context.Request.QueryString;
+        // Query string уже в targetUrl, но на всякий:
+        var fullUrl = !context.Request.QueryString.HasValue
+            ? targetUrl
+            : $"{targetUrl}{context.Request.QueryString}";
+        requestMessage.RequestUri = new Uri(fullUrl);
 
-        requestMessage.RequestUri = !queryString.HasValue
-            ? new Uri(targetUrl)
-            : new Uri($"{targetUrl}{queryString}");
-
-
-        // Copy headers (except host)
+        // Копируем заголовки (кроме Host)
         foreach (var header in context.Request.Headers)
         {
+            if (string.Equals(header.Key, "Host", StringComparison.OrdinalIgnoreCase))
+                continue;
+
             if (!requestMessage.Headers.TryAddWithoutValidation(header.Key, [.. header.Value]))
             {
                 requestMessage.Content ??= new StreamContent(Stream.Null);
@@ -136,12 +137,28 @@ async Task RedirectRequest(HttpContext context ,string targetUrl)
             }
         }
 
+        // 👇 КОПИРУЕМ ТЕЛО ЗАПРОСА
+        if (context.Request.ContentLength > 0 ||
+            context.Request.Headers.ContainsKey("Transfer-Encoding"))
+        {
+            // Создаём StreamContent из Request.Body
+            var streamContent = new StreamContent(context.Request.Body);
+
+            // Копируем Content-Type
+            if (context.Request.Headers.TryGetValue("Content-Type", out var contentType))
+            {
+                streamContent.Headers.ContentType =
+                    new System.Net.Http.Headers.MediaTypeHeaderValue(contentType);
+            }
+
+            requestMessage.Content = streamContent;
+        }
+
         var response = await httpClient.SendAsync(requestMessage, context.RequestAborted);
 
-        // Copy response status
         context.Response.StatusCode = (int)response.StatusCode;
 
-        // Copy response headers
+        // Копируем заголовки ответа
         foreach (var header in response.Headers)
         {
             context.Response.Headers[header.Key] = header.Value.ToArray();
@@ -151,7 +168,7 @@ async Task RedirectRequest(HttpContext context ,string targetUrl)
             context.Response.Headers[header.Key] = header.Value.ToArray();
         }
 
-        // Copy response body
+        // Копируем тело ответа
         await response.Content.CopyToAsync(context.Response.Body);
     }
     catch (Exception ex)
@@ -161,6 +178,55 @@ async Task RedirectRequest(HttpContext context ,string targetUrl)
         await context.Response.WriteAsync("Gateway error");
     }
 }
+
+//async Task RedirectRequest(HttpContext context ,string targetUrl)
+//{
+//    try
+//    {
+//        var requestMessage = new HttpRequestMessage(new HttpMethod(context.Request.Method), targetUrl);
+
+//        var queryString = context.Request.QueryString;
+
+//        requestMessage.RequestUri = !queryString.HasValue
+//            ? new Uri(targetUrl)
+//            : new Uri($"{targetUrl}{queryString}");
+
+
+//        // Copy headers (except host)
+//        foreach (var header in context.Request.Headers)
+//        {
+//            if (!requestMessage.Headers.TryAddWithoutValidation(header.Key, [.. header.Value]))
+//            {
+//                requestMessage.Content ??= new StreamContent(Stream.Null);
+//                requestMessage.Content.Headers.TryAddWithoutValidation(header.Key, [.. header.Value]);
+//            }
+//        }
+
+//        var response = await httpClient.SendAsync(requestMessage, context.RequestAborted);
+
+//        // Copy response status
+//        context.Response.StatusCode = (int)response.StatusCode;
+
+//        // Copy response headers
+//        foreach (var header in response.Headers)
+//        {
+//            context.Response.Headers[header.Key] = header.Value.ToArray();
+//        }
+//        foreach (var header in response.Content.Headers)
+//        {
+//            context.Response.Headers[header.Key] = header.Value.ToArray();
+//        }
+
+//        // Copy response body
+//        await response.Content.CopyToAsync(context.Response.Body);
+//    }
+//    catch (Exception ex)
+//    {
+//        Console.WriteLine($"Proxy error: {ex}");
+//        context.Response.StatusCode = (int)HttpStatusCode.BadGateway;
+//        await context.Response.WriteAsync("Gateway error");
+//    }
+//}
 
 // Optional: Add a health endpoint
 app.MapGet("/health", () => "OK");
