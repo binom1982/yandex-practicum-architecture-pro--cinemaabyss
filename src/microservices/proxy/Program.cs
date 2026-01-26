@@ -51,6 +51,30 @@ var migrationPercent = int.TryParse(migrationPercentValue, out var percent) && p
 
 var httpClient = app.Services.GetRequiredService<IHttpClientFactory>().CreateClient();
 
+app.Use(async (context, next) =>
+{
+    var path = context.Request.Path;
+
+    if (path.StartsWithSegments("/api/users"))
+    {
+        var newPath = path.ToString().TrimStart('/');
+        var targetUrl = $"{monolithUrl}/{newPath}{context.Request.QueryString}";
+        await RedirectRequest(context, targetUrl);
+        return; // не вызываем next()
+    }
+
+    if (path.StartsWithSegments("/api/events"))
+    {
+        var newPath = path.ToString().TrimStart('/');
+        var targetUrl = $"{eventsServiceUrl}/{newPath}{context.Request.QueryString}";
+        await RedirectRequest(context, targetUrl);
+        return;
+    }
+
+    await next(); // если не нашли — продолжаем конвейер
+});
+
+
 app.MapGet("/api/movies", async (HttpContext context) =>
 {
     var useMoviesService = false;
@@ -75,17 +99,19 @@ app.MapGet("/api/movies", async (HttpContext context) =>
 //    await RedirectRequest(context, targetUrl);
 //});
 
-app.MapGet("/api/users/{**slug}", async (string slug, HttpContext context) =>
-{
-    var targetUrl = $"{monolithUrl}/api/users/{slug}";
-    await RedirectRequest(context, targetUrl);
-}).ExcludeFromDescription();
+//app.MapGet("/api/users/{**slug}", async (string slug, HttpContext context) =>
+//{
+//    var targetUrl = $"{monolithUrl}/api/users/{slug}";
+//    await RedirectRequest(context, targetUrl);
+//}).ExcludeFromDescription();
 
-app.MapGet("/api/events/{**slug}", async (string slug, HttpContext context) =>
-{
-    var targetUrl = $"{eventsServiceUrl}/api/events/{slug}";
-    await RedirectRequest(context, targetUrl);
-}).ExcludeFromDescription();
+//app.MapGet("/api/events/{**slug}", async (string slug, HttpContext context) =>
+//{
+//    var targetUrl = $"{eventsServiceUrl}/api/events/{slug}";
+//    await RedirectRequest(context, targetUrl);
+//}).ExcludeFromDescription();
+
+
 
 async Task RedirectRequest(HttpContext context ,string targetUrl)
 {
