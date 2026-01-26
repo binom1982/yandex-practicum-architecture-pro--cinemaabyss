@@ -87,7 +87,6 @@ app.MapGet("/api/events/{**slug}", async (string slug, HttpContext context) =>
     await RedirectRequest(context, targetUrl);
 }).ExcludeFromDescription();
 
-
 async Task RedirectRequest(HttpContext context ,string targetUrl)
 {
     try
@@ -141,8 +140,8 @@ async Task RedirectRequest(HttpContext context ,string targetUrl)
 app.MapGet("/health", () => "OK");
 
 
-app.Run();
-//app.Run("http://+:8000");
+//app.Run();
+app.Run("http://+:8000");
 
 
 /*
