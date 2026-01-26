@@ -3,7 +3,16 @@ using System.Net;
 using System.Security.Cryptography;
 using System.Text.Json.Serialization;
 
+using Microsoft.Extensions.DependencyInjection;
+
 var builder = WebApplication.CreateSlimBuilder(args);
+
+// Регистрация всех стандартных inline-ограничений, включая regex (нужен для {**slug})
+builder.Services.AddRouting(options =>
+{
+    // Это включит все стандартные ограничения: int, guid, bool, regex, minlength и т.д.
+    // В том числе — поддержку catch-all (**)
+});
 
 builder.Services.ConfigureHttpJsonOptions(options =>
 {
@@ -11,6 +20,7 @@ builder.Services.ConfigureHttpJsonOptions(options =>
 });
 // Learn more about configuring OpenAPI at https://aka.ms/aspnet/openapi
 builder.Services.AddOpenApi();
+//builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddHttpClient();
 
 var app = builder.Build();
@@ -18,13 +28,15 @@ var app = builder.Build();
 //if (app.Environment.IsDevelopment())
 //{
     app.MapOpenApi();
+    //app.UseSwagger();
     app.UseSwaggerUI(c =>
-         c.SwaggerEndpoint("/openapi/v1.json", "API Telemetry Service v1")
+         c.SwaggerEndpoint("/openapi/v1.json", "API Proxy Service v1")
     );
 //}
 
 var monolithUrl = Environment.GetEnvironmentVariable("MONOLITH_URL") ?? "http://localhost:9080";
 var moviesServiceUrl = Environment.GetEnvironmentVariable("MOVIES_SERVICE_URL") ?? "http://localhost:9081";
+var eventsServiceUrl = Environment.GetEnvironmentVariable("EVENTS_SERVICE_URL") ?? "http://localhost:8082";
 
 // Постепенная миграция
 var isGradualMigration = Environment.GetEnvironmentVariable("GRADUAL_MIGRATION")?.Equals("true", StringComparison.OrdinalIgnoreCase) == true;
@@ -57,11 +69,24 @@ app.MapGet("/api/movies", async (HttpContext context) =>
     await RedirectRequest(context, targetUrl);
 });
 
-app.MapGet("/api/users", async (HttpContext context) =>
+//app.MapGet("/api/users", async (HttpContext context) =>
+//{
+//    var targetUrl = $"{monolithUrl}/api/users";
+//    await RedirectRequest(context, targetUrl);
+//});
+
+app.MapGet("/api/users/{**slug}", async (string slug, HttpContext context) =>
 {
-    var targetUrl = $"{monolithUrl}/api/users";
+    var targetUrl = $"{monolithUrl}/api/users/{slug}";
     await RedirectRequest(context, targetUrl);
-});
+}).ExcludeFromDescription();
+
+app.MapGet("/api/events/{**slug}", async (string slug, HttpContext context) =>
+{
+    var targetUrl = $"{eventsServiceUrl}/api/events/{slug}";
+    await RedirectRequest(context, targetUrl);
+}).ExcludeFromDescription();
+
 
 async Task RedirectRequest(HttpContext context ,string targetUrl)
 {
@@ -115,7 +140,9 @@ async Task RedirectRequest(HttpContext context ,string targetUrl)
 // Optional: Add a health endpoint
 app.MapGet("/health", () => "OK");
 
-app.Run("http://+:8000");
+
+app.Run();
+//app.Run("http://+:8000");
 
 
 /*
