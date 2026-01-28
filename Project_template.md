@@ -422,7 +422,7 @@ kubectl label namespace cinemaabyss istio-injection=enabled --overwrite
 
 kubectl get namespace -L istio-injection
 
-kubectl apply -f .\src\kubernetes\circuit-breaker-config.yaml -n cinemaabyss
+kubectl apply -f ./src/kubernetes/circuit-breaker-config.yaml -n cinemaabyss
 
 ```
 
@@ -472,6 +472,10 @@ You can see 21 for the upstream_rq_pending_overflow value which means 21 calls s
 ```
 
 Приложите скриншот работы circuit breaker'а
+
+![На изображении изображено Circuit Breaker output](screenshots\circuit_breaker_output.png "Circuit Breaker output")
+
+![На изображении изображено Circuit Breaker statistics](screenshots\circuit_breaker_statistics.png "Circuit Breaker statistics")
 
 Удаляем все
 
