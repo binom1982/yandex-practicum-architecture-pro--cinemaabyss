@@ -372,7 +372,14 @@ kubectl delete  namespace cinemaabyss
 Запустите
 
 ```bash
-helm install cinemaabyss ./src/kubernetes/helm --namespace cinemaabyss --create-namespace
+helm install cinemaabyss ./src/kubernetes/helm --namespace cinemaabyss 
+```
+
+Для удаления после использования
+
+```bash
+helm uninstall cinemaabyss --namespace cinemaabyss
+--create-namespace
 ```
 
 Если в процессе будет ошибка
