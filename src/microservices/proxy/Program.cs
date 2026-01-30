@@ -59,26 +59,38 @@ var httpClient = app.Services.GetRequiredService<IHttpClientFactory>().CreateCli
 
 app.Use(async (context, next) =>
 {
-    
     var path = context.Request.Path;
     Console.WriteLine($"{nameof(path)}: {path}");
-    if (path.StartsWithSegments("/api/users"))
+    Console.WriteLine($"QueryString: {context.Request.QueryString}");
+
+    if (
+        path.StartsWithSegments("/api/users")
+        || path.StartsWithSegments("/api/subscriptions")
+        || path.StartsWithSegments("/api/payments")
+    )
     {
-        var newPath = path.ToString().TrimStart('/');
-        var targetUrl = $"{monolithUrl}/{newPath}{context.Request.QueryString}";
-        Console.WriteLine($"{nameof(targetUrl)}: {targetUrl}");
+        // Безопасное формирование URL с правильной обработкой query string
+        var uriBuilder = new UriBuilder(monolithUrl)
+        {
+            Path = path.ToString().TrimStart('/').Trim('/') // Убираем лишние слеши
+        };
+
+        // Добавляем query string БЕЗ дублирования '?'
+        if (context.Request.QueryString.HasValue &&
+            !string.IsNullOrEmpty(context.Request.QueryString.Value))
+        {
+            // Убираем начальный '?' из QueryString.Value
+            uriBuilder.Query = context.Request.QueryString.Value.TrimStart('?');
+        }
+
+        var targetUrl = uriBuilder.ToString();
+        //Console.WriteLine($"{nameof(targetUrl)}: {targetUrl}");
+
+        Console.WriteLine($"➡️ Proxying {context.Request.Method} {context.Request.Path}{context.Request.QueryString}");
+        Console.WriteLine($"➡️ Target URL: {targetUrl}");
         await RedirectRequest(context, targetUrl);
         return; // не вызываем next()
     }
-
-    //if (path.StartsWithSegments("/api/events"))
-    //{
-    //    var newPath = path.ToString().TrimStart('/');
-    //    var targetUrl = $"{eventsServiceUrl}/{newPath}{context.Request.QueryString}";
-    //    Console.WriteLine($"{nameof(targetUrl)}: {targetUrl}");
-    //    await RedirectRequest(context, targetUrl);
-    //    return;
-    //}
 
     await next(); // если не нашли — продолжаем конвейер
 });
