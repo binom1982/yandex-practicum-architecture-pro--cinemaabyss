@@ -91,12 +91,48 @@ app.Use(async (context, next) =>
         await RedirectRequest(context, targetUrl);
         return; // не вызываем next()
     }
+    else if (path.StartsWithSegments("/api/movies"))
+    {
+        var useMoviesService = false;
 
-    await next(); // если не нашли — продолжаем конвейер
+        if (isGradualMigration)
+        {
+            // Generate a random number between 0 and 99
+            var random = RandomNumberGenerator.GetInt32(100);
+            useMoviesService = random < migrationPercent;
+        }
+
+        var actualMoviesServiceUrl = useMoviesService ? moviesServiceUrl : monolithUrl;
+
+
+        // Безопасное формирование URL с правильной обработкой query string
+        var uriBuilder = new UriBuilder(actualMoviesServiceUrl)
+        {
+            Path = path.ToString().TrimStart('/').Trim('/') // Убираем лишние слеши
+        };
+
+        // Добавляем query string БЕЗ дублирования '?'
+        if (context.Request.QueryString.HasValue &&
+            !string.IsNullOrEmpty(context.Request.QueryString.Value))
+        {
+            // Убираем начальный '?' из QueryString.Value
+            uriBuilder.Query = context.Request.QueryString.Value.TrimStart('?');
+        }
+
+        var targetUrl = uriBuilder.ToString();
+        //Console.WriteLine($"{nameof(targetUrl)}: {targetUrl}");
+
+        Console.WriteLine($"➡️ Proxying {context.Request.Method} {context.Request.Path}{context.Request.QueryString}");
+        Console.WriteLine($"➡️ Target URL: {targetUrl}");
+        await RedirectRequest(context, targetUrl);
+        return; // не вызываем next()
+    }
+
+        await next(); // если не нашли — продолжаем конвейер
 });
 
 
-app.MapGet("/api/movies", async (HttpContext context) =>
+/*app.MapGet("/api/movies", async (HttpContext context) =>
 {
     var useMoviesService = false;
 
@@ -112,7 +148,7 @@ app.MapGet("/api/movies", async (HttpContext context) =>
         : $"{monolithUrl}/api/movies";
     Console.WriteLine($"{nameof(targetUrl)}: {targetUrl}");
     await RedirectRequest(context, targetUrl);
-});
+});*/
 
 //app.MapGet("/api/users", async (HttpContext context) =>
 //{
