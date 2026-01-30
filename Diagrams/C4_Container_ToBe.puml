@@ -1,0 +1,100 @@
+@startuml
+!NEW_C4_STYLE=1
+!theme C4_sandstone from <C4/themes>
+!include Templates/C4_Container.puml
+title Container diagrams: Кинобездна (CinemaAbyss)
+
+
+
+SHOW_PERSON_OUTLINE()
+LAYOUT_LANDSCAPE()
+' LAYOUT_AS_SKETCH()
+
+Person(user, "User", "Пользователь")
+
+Enterprise_Boundary(smart_house_system, "CinemaAbyss (domen)") {
+
+    Container(mobile_application, "Mobile App")
+    Container(web_application, "Web App") 
+    Container(smart_tv_application, "Smart TV App")
+
+    Rel(user, mobile_application, "Uses")
+    Rel(user, web_application, "Uses")
+    Rel(user, smart_tv_application, "Uses")
+
+    Container(gateway_api, "API Gateway", "C#", "Реализует функционал для постепенного перехода от монолита к микросервисам")
+    
+    Rel(mobile_application, gateway_api, "Uses")
+    Rel(web_application, gateway_api, "Uses")
+    Rel(smart_tv_application, gateway_api, "Uses")
+
+    System_Boundary(monolith, "Monolith", , , "Монолит") {
+        Container(monolith_movies_api, "API Movies (subdomen)", "Go", "Предоставляет функции через API")
+        Container(monolith_users_api, "API Users (subdomen)", "Go", "Предоставляет функции через API")
+        Container(monolith_payments_api, "API Payments (subdomen)", "Go", "Предоставляет функции через API")
+        Container(monolith_subscriptions_api, "API Subscriptions (subdomen)", "Go", "Предоставляет функции через API")
+
+        ContainerDb(monolith_database, "Database", "PostgreSQL", "Хранит информацию")
+
+        Rel(gateway_api, monolith_movies_api, "Uses") 
+        Rel(gateway_api, monolith_users_api, "Uses")
+        Rel(gateway_api, monolith_payments_api, "Uses") 
+        Rel(gateway_api, monolith_subscriptions_api, "Uses") 
+
+        Rel(monolith_movies_api, monolith_database, "Reads/Writes")
+        Rel(monolith_users_api, monolith_database, "Reads/Writes")
+        Rel(monolith_payments_api, monolith_database, "Reads/Writes")
+        Rel(monolith_subscriptions_api, monolith_database, "Reads/Writes")    
+    }
+
+    System_Boundary(microservices, "Microservices", , , "Микросервисы") {
+        Container(microservices_bff_mobile_application, "BFF Mobile App", "Отвечает за сбор информации от разных микросервисов")
+        Container(microservices_bff_web_application, "BFF Web App", "Отвечает за сбор информации от разных микросервисов") 
+        Container(microservices_bff_smart_tv_application, "BFF Smart TV App", "Отвечает за сбор информации от разных микросервисов")
+
+        System_Boundary(movies_service, "Movies Service (subdomen)", , , "Обрабатывает всю функциональность, связанную с фильмами") {
+            Container(movies_service_api, "API Application", "Go", "Предоставляет функции через API")
+            ContainerDb(movies_service_database, "Database", "PostgreSQL", "Хранит информацию")
+            
+            Rel(movies_service_api, movies_service_database, "Reads/Writes")
+        }
+
+        System_Boundary(events_service, "Events Service (subdomen)", , , "Обрабатывает коммуникацию между сервисами на основе событий с использованием Kafka") {
+            Container(events_service_api, "API Events", "C#", "Предоставляет функции через API")
+            ContainerQueue(events_service_queue, "Queue", "Очередь для обработки событий", "Apache Kafka")
+        }
+
+        Rel(gateway_api, microservices_bff_mobile_application, "Uses")
+        Rel(gateway_api, microservices_bff_web_application, "Uses")
+        Rel(gateway_api, microservices_bff_smart_tv_application, "Uses")
+
+        Rel(microservices_bff_mobile_application, movies_service_api, "Uses")
+        Rel(microservices_bff_web_application, movies_service_api, "Uses")
+        Rel(microservices_bff_smart_tv_application, movies_service_api, "Uses")
+
+        BiRel(events_service_api, events_service_queue, "Publishes to/Subscribes to")
+        BiRel(movies_service_api, events_service_api, "Publishes to/Subscribes to")
+        
+        BiRel(monolith_movies_api, events_service_api, "Publishes to/Subscribes to")
+        BiRel(monolith_users_api, events_service_api, "Publishes to/Subscribes to")
+        BiRel(monolith_payments_api, events_service_api, "Publishes to/Subscribes to")
+    }
+}
+
+Container_Ext(online_cinemas_api_ext, "API Online Cinemas", "API Онлайн кинотеатров")
+Rel_L(monolith_subscriptions_api, online_cinemas_api_ext, "Uses")
+
+Container_Ext(payment_acquiring_system_ext, "Payment Acquiring System", "Эквайринговая система")
+Rel_L(monolith_payments_api, payment_acquiring_system_ext, "Uses")
+
+Boundary(recommendation_system_ext, "Внешняя рекомендательная система") {
+    ContainerQueue_Ext(recommendation_system_queue_ext, "Queue", "Брокер сообщений", "RabbitMQ")
+}
+Rel(gateway_api, recommendation_system_queue_ext, "Uses")
+
+Container_Ext(simple_storage_service_ext, "Simple Storage Service (S3)", "облачный сервис хранения фильмов")
+Rel(monolith_movies_api, simple_storage_service_ext, "Uses")
+Rel(movies_service_api, simple_storage_service_ext, "Uses")
+
+footer drawn with PlantUML v. %version() and C4-PlantUML v. C4Version()
+@enduml

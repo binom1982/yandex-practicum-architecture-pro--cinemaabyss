@@ -5,7 +5,7 @@ global:
 
 # Image pull secrets
 imagePullSecrets:
-  dockerconfigjson: ewoJImF1dGhzIjogewoJCSJnaGNyLmlvIjogewoJCQkiYXV0aCI6
+  dockerconfigjson: ew0gICJhdXRocyI6IHsNICAgICJnaGNyLmlvIjogew0gICAgICAidXNlcm5hbWUiOiAiYmlub20xOTgyIiwNICAgICAgInBhc3N3b3JkIjogImdocF9Cb3BBdmxkYlpHNk5WZDlJZWdsYXg3Ym1XNEdTRnYzREgwWXEiLA0gICAgICAiYXV0aCI6ICJZbWx1YjIweE9UZ3lPbWRvY0Y5Q2IzQkJkbXhrWWxwSE5rNVdaRGxKWldkc1lYZzNZbTFYTkVkVFJuWXpSRWd3V1hFPSINICAgIH0NICB9DX0=
 # Database configuration
 database:
   host: postgres
@@ -33,7 +33,7 @@ database:
 monolith:
   enabled: true
   image:
-    repository: ghcr.io/db-exp/cinemaabysstest/monolith
+    repository: ghcr.io/binom1982/yandex-practicum-architecture-pro--cinemaabyss/monolith
     tag: latest
     pullPolicy: Always
   replicas: 1
@@ -53,7 +53,7 @@ monolith:
 proxyService:
   enabled: true
   image:
-    repository: ghcr.io/db-exp/cinemaabysstest/proxy-service
+    repository: ghcr.io/binom1982/yandex-practicum-architecture-pro--cinemaabyss/proxy-service
     tag: latest
     pullPolicy: Always
   replicas: 1
@@ -73,7 +73,7 @@ proxyService:
 moviesService:
   enabled: true
   image:
-    repository: ghcr.io/db-exp/cinemaabysstest/movies-service
+    repository: ghcr.io/binom1982/yandex-practicum-architecture-pro--cinemaabyss/movies-service
     tag: latest
     pullPolicy: Always
   replicas: 1
@@ -93,7 +93,7 @@ moviesService:
 eventsService:
   enabled: true
   image:
-    repository: ghcr.io/db-exp/cinemaabysstest/events-service
+    repository: ghcr.io/binom1982/yandex-practicum-architecture-pro--cinemaabyss/events-service
     tag: latest
     pullPolicy: Always
   replicas: 1

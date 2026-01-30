@@ -22,7 +22,8 @@ spec:
     spec:
       containers:
       - name: monolith
-        image:  ghcr.io/db-exp/cinemaabysstest/monolith:latest
+        # image:  ghcr.io/db-exp/cinemaabysstest/monolith:latest
+        image:  ghcr.io/binom1982/yandex-practicum-architecture-pro--cinemaabyss/monolith:latest
         imagePullPolicy: Always
         ports:
         - containerPort: 8080
