@@ -15,8 +15,10 @@ var builder = WebApplication.CreateSlimBuilder(args);
 builder.Services.AddOpenApi();
 builder.Services.AddHttpClient();
 
-// Kafka configuration
+var port = Environment.GetEnvironmentVariable("PORT") ?? "8080";
 var kafkaBootstrapServers = Environment.GetEnvironmentVariable("KAFKA_BROKERS") ?? "kafka:9092";
+Console.WriteLine($"PORT: {port}");
+Console.WriteLine($"KAFKA_BROKERS: {kafkaBootstrapServers}");
 
 // Register Kafka producer and consumer as singletons
 builder.Services.AddSingleton(sp =>
@@ -188,7 +190,7 @@ app.MapPost("/api/events/payment", async (
 
 app.MapGet("/api/events/health", () => Results.Ok(new { Status = true }));
 
-app.Run("http://+:8082");
+app.Run($"http://+:{port}");
 
 // --- DTOs ---
 

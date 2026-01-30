@@ -34,10 +34,12 @@ var app = builder.Build();
     );
 //}
 
+var port = Environment.GetEnvironmentVariable("PORT") ?? "8080";
 var monolithUrl = Environment.GetEnvironmentVariable("MONOLITH_URL") ?? "http://localhost:9080";
 var moviesServiceUrl = Environment.GetEnvironmentVariable("MOVIES_SERVICE_URL") ?? "http://localhost:9081";
-var eventsServiceUrl = Environment.GetEnvironmentVariable("EVENTS_SERVICE_URL") ?? "http://localhost:8082";
+var eventsServiceUrl = Environment.GetEnvironmentVariable("EVENTS_SERVICE_URL") ?? "http://localhost:9082";
 
+Console.WriteLine($"PORT: {port}");
 Console.WriteLine($"MONOLITH_URL: {monolithUrl}");
 Console.WriteLine($"MOVIES_SERVICE_URL: {moviesServiceUrl}");
 Console.WriteLine($"EVENTS_SERVICE_URL: {eventsServiceUrl}");
@@ -96,7 +98,7 @@ app.MapGet("/api/movies", async (HttpContext context) =>
     var targetUrl = useMoviesService 
         ? $"{moviesServiceUrl}/api/movies"
         : $"{monolithUrl}/api/movies";
-
+    Console.WriteLine($"{nameof(targetUrl)}: {targetUrl}");
     await RedirectRequest(context, targetUrl);
 });
 
@@ -240,7 +242,7 @@ app.MapGet("/health", () => "OK");
 
 
 //app.Run();
-app.Run("http://+:8000");
+app.Run($"http://+:{port}");
 
 
 /*

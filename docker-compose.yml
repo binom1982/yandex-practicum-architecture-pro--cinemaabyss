@@ -99,9 +99,9 @@ services:
       kafka:
         condition: service_healthy
     ports:
-      - "8082:8080"
+      - "8082:8082"
     environment:
-      # PORT: 8082
+      PORT: 8082
       KAFKA_BROKERS: kafka:9092
     networks:
       - cinemaabyss-network
@@ -117,9 +117,9 @@ services:
       - movies-service
       - events-service
     ports:
-      - "8000:8080"
+      - "8000:8000"
     environment:
-      # PORT: 8000
+      PORT: 8000
       MONOLITH_URL: http://monolith:8080
       MOVIES_SERVICE_URL: http://movies-service:8081
       EVENTS_SERVICE_URL: http://events-service:8082
